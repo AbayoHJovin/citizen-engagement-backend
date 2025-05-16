@@ -20,9 +20,9 @@ const router = Router();
 
 // ===== AGENCIES =====
 
-router.post('/', protect, requireRole('ADMIN'), createAgencyHandler);
+router.post('/create', protect, requireRole('ADMIN'), createAgencyHandler);
 
-router.get('/', getAgenciesHandler);
+router.get('/getAll', getAgenciesHandler);
 
 router.get('/all', protect, requireRole('ADMIN'), getAllAgenciesHandler);
 
