@@ -1,21 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        role: string;
+      };
+    }
+  }
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || '';
 
-export const protect = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+export const protect = (req: Request, res: Response, next: NextFunction): void => {
+  const token = req.cookies?.accessToken;
 
-  if (!authHeader || !authHeader.startsWith('Bearer '))
-    return res.status(401).json({ message: 'Not authorized' });
-
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    res.status(401).json({ message: 'Not authenticated' });
+    return;
+  }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string, role: string };
-    req.user = decoded;
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+
+    req.user = {
+      id: decoded.id as string,
+      role: decoded.role as string,
+    };
+
     next();
-  } catch {
+  } catch (err) {
     res.status(401).json({ message: 'Invalid token' });
   }
 };
