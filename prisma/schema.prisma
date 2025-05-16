@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  password      String
+  role          Role
+  complaints    Complaint[]
+  responses     Response[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model Agency {
+  id         String      @id @default(uuid())
+  name        String
+  description String?
+  categories  Category[]
+  complaints  Complaint[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Category {
+  id         String      @id @default(uuid())
+  name       String
+  agency     Agency      @relation(fields: [agencyId], references: [id])
+  agencyId   String
+  complaints Complaint[]
+}
+
+model Complaint {
+  id          String          @id @default(uuid())
+  title       String
+  description String
+  status      ComplaintStatus @default(PENDING)
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  agency   Agency @relation(fields: [agencyId], references: [id])
+  agencyId String
+
+  citizen   User   @relation(fields: [citizenId], references: [id])
+  citizenId String
+
+  response Response?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Response {
+  id          String    @id @default(uuid())
+  message     String
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  complaintId String    @unique
+  responder   User      @relation(fields: [responderId], references: [id])
+  responderId String
+  createdAt   DateTime  @default(now())
+}
+
+enum Role {
+  CITIZEN
+  ADMIN
+  AGENCY
+}
+
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
