@@ -1,12 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { hashPassword, comparePasswords } from '../utils/hash';
-import { generateToken } from '../utils/jwt';
-import crypto from 'crypto';
+import { generateToken, verifyToken } from '../utils/jwt';
+import crypto, { verify } from 'crypto';
 import { sendResetEmail } from '../utils/mailer';
+import { Request } from 'express';
 
 const prisma = new PrismaClient();
 
-export const registerUser = async (name: string, email: string, password: string,confirmPassword:string) => {
+export const registerUser = async (name: string, email: string, password: string,confirmPassword:string,province:string,district:string,sector:string,cell:string,village:string) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new Error('Email already registered');
   if(password != confirmPassword){
@@ -18,7 +19,12 @@ export const registerUser = async (name: string, email: string, password: string
       name,
       email,
       password: hashed,
-      role: 'CITIZEN'
+      role: 'CITIZEN',
+      province,
+      district,
+      sector,
+      cell,
+      village,
     }
   });
 
@@ -97,4 +103,43 @@ export const resetPasswordService = async (token: string, newPassword: string, c
 
   // Remove used token
   await prisma.passwordResetToken.delete({ where: { token } });
+};
+
+
+export const getUserFromAccessOrRefresh = async (req: Request): Promise<null | { name: string; email: string; role: string; newAccessToken?: string }> => {
+  try {
+    const accessToken = req.cookies.accessToken;
+    console.log("Access Token cookies: ", accessToken);
+    if (!accessToken) {
+      throw new Error("No access token");
+    }
+      const decoded: any = verifyToken(accessToken);
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+      });
+      if (user) return { name: user.name, email: user.email, role: user.role };
+  } catch (err: any) {
+    if (err.name !== 'TokenExpiredError') {
+      return null;
+    }
+  }
+
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) return null;
+
+  const storedToken = await prisma.refreshToken.findUnique({
+    where: { token: refreshToken },
+    include: { user: true },
+  });
+
+  if (!storedToken || new Date() > storedToken.expiresAt) return null;
+
+  const newAccessToken = generateToken(storedToken.userId, storedToken.user.role);
+
+  return {
+    name: storedToken.user.name,
+    email: storedToken.user.email,
+    role: storedToken.user.role,
+    newAccessToken,
+  };
 };

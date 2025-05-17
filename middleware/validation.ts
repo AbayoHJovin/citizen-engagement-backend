@@ -1,9 +1,7 @@
 import { body, validationResult } from "express-validator";
 import { Request, Response, NextFunction } from "express";
 export const registerValidationRules = [
-  body("email")
-    .isEmail()
-    .withMessage("Email must be a valid email address"),
+  body("email").isEmail().withMessage("Email must be a valid email address"),
 
   body("password")
     .isLength({ min: 6 })
@@ -19,29 +17,17 @@ export const registerValidationRules = [
       return true;
     }),
 
-  body("name")
-    .isLength({ min: 3 })
-    .withMessage("Name is required"),
+  body("name").isLength({ min: 3 }).withMessage("Name is required"),
 
-  body("province")
-    .notEmpty()
-    .withMessage("Province is required"),
+  body("address.province").notEmpty().withMessage("Province is required"),
 
-  body("district")
-    .notEmpty()
-    .withMessage("District is required"),
+  body("address.district").notEmpty().withMessage("District is required"),
 
-  body("sector")
-    .notEmpty()
-    .withMessage("Sector is required"),
+  body("address.sector").notEmpty().withMessage("Sector is required"),
 
-  body("cell")
-    .notEmpty()
-    .withMessage("Cell is required"),
+  body("address.cell").notEmpty().withMessage("Cell is required"),
 
-  body("village")
-    .notEmpty()
-    .withMessage("Village is required"),
+  body("address.village").notEmpty().withMessage("Village is required"),
 ];
 
 export const validate = (

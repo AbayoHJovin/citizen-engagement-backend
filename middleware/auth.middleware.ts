@@ -20,7 +20,7 @@ export const protect = (
   next: NextFunction
 ): void => {
   const token = req.cookies?.accessToken;
-  console.log("request:", req);
+  console.log("request cookies:", req.cookies);
   if (!token) {
     res.status(401).json({ message: "Not authenticated" });
     return;
