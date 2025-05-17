@@ -8,21 +8,22 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  name          String
-  email         String         @unique
-  password      String
-  role          Role
-  province      String?
-  district      String?
-  sector        String?
-  cell          String?
-  village       String?
-  complaints    Complaint[]
-  responses     Response[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  refreshTokens RefreshToken[]
+  id                 String              @id @default(uuid())
+  name               String
+  email              String              @unique
+  password           String
+  role               Role
+  province           String?
+  district           String?
+  sector             String?
+  cell               String?
+  village            String?
+  adminstrationScope AdminstrationScope?
+  complaints         Complaint[]
+  responses          Response[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  refreshTokens      RefreshToken[]
 }
 
 model RefreshToken {
@@ -39,7 +40,6 @@ model Complaint {
   title       String
   description String
   status      ComplaintStatus @default(PENDING)
-  categoryId  String
   citizen     User            @relation(fields: [citizenId], references: [id])
   citizenId   String
   response    Response?
@@ -68,4 +68,12 @@ enum ComplaintStatus {
   IN_PROGRESS
   RESOLVED
   REJECTED
+}
+
+enum AdminstrationScope {
+  PROVINCE
+  DISTRICT
+  SECTOR
+  CELL
+  VILLAGE
 }
