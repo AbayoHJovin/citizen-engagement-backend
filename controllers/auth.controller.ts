@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser } from '../services/auth.service';
+import { registerUser, loginUser, requestPasswordReset, resetPasswordService } from '../services/auth.service';
 import { toUserDTO } from '../utils/user.dto';
 import { generateRefreshToken, generateToken } from '../utils/jwt';
 
@@ -52,3 +52,32 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(400).json({ message: err.message });
   }
 };
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    if (!email) res.status(400).json({ message: "Email is required" });
+
+    await requestPasswordReset(email);
+
+    res.status(200).json({ message: "Reset token sent to your email" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token, newPassword, confirmNewPassword } = req.body;
+
+  if (!token || !newPassword || !confirmNewPassword) {
+    res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    await resetPasswordService(token, newPassword, confirmNewPassword);
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
