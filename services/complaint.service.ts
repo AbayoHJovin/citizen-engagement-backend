@@ -6,7 +6,7 @@ export const createComplaint = async (
   citizenId: string,
   title: string,
   description: string,
-  imageUrls: string[] = [] // Array of Cloudinary URLs
+  imageUrls: string[] = []
 ) => {
   return prisma.complaint.create({
     data: {
