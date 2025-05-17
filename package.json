@@ -2,20 +2,20 @@
   "name": "citizen-engagement-backend",
   "version": "1.0.0",
   "description": "",
-"scripts": {
-  "dev": "ts-node-dev --respawn --transpile-only server.ts",
-  "build": "tsc",
-  "start": "node dist/server.js",
-  "prisma:migrate": "prisma migrate dev",
-  "prisma:studio": "prisma studio"
-},
-
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.8.1",
     "bcrypt": "^6.0.0",
+    "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -24,6 +24,8 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.2",
+    "multer-storage-cloudinary": "^4.0.0",
     "prisma": "^6.8.1"
   },
   "devDependencies": {
@@ -33,6 +35,7 @@
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.9",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.15.18",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"

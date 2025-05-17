@@ -34,7 +34,6 @@ model RefreshToken {
   createdAt DateTime @default(now())
   expiresAt DateTime
 }
-
 model Complaint {
   id          String          @id @default(uuid())
   title       String
@@ -43,9 +42,19 @@ model Complaint {
   citizen     User            @relation(fields: [citizenId], references: [id])
   citizenId   String
   response    Response?
+  images      Image[]         // New relation
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 }
+
+model Image {
+  id          String    @id @default(uuid())
+  url         String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  complaintId String
+  createdAt   DateTime  @default(now())
+}
+
 
 model Response {
   id          String    @id @default(uuid())

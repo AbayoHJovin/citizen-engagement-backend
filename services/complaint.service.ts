@@ -5,13 +5,20 @@ const prisma = new PrismaClient();
 export const createComplaint = async (
   citizenId: string,
   title: string,
-  description: string
+  description: string,
+  imageUrls: string[] = [] // Array of Cloudinary URLs
 ) => {
   return prisma.complaint.create({
     data: {
       title,
       description,
       citizenId,
+      images: {
+        create: imageUrls.map((url) => ({ url })),
+      },
+    },
+    include: {
+      images: true,
     },
   });
 };
@@ -20,6 +27,9 @@ export const getMyComplaints = async (citizenId: string) => {
   return prisma.complaint.findMany({
     where: { citizenId },
     orderBy: { createdAt: "desc" },
+    include: {
+      images: true,
+    },
   });
 };
 
@@ -41,6 +51,7 @@ export const updateComplaint = async (
   return prisma.complaint.update({
     where: { id: complaintId },
     data,
+    include: { images: true },
   });
 };
 
@@ -58,15 +69,28 @@ export const deleteComplaint = async (
   if (complaint.status !== ComplaintStatus.PENDING)
     throw new Error("Only pending complaints can be deleted");
 
+  // Related images will be deleted automatically due to onDelete: Cascade
   return prisma.complaint.delete({ where: { id: complaintId } });
 };
+
 export const getComplaintById = async (complaintId: string) => {
-  return prisma.complaint.findUnique({ where: { id: complaintId } });
+  return prisma.complaint.findUnique({
+    where: { id: complaintId },
+    include: {
+      images: true,
+      citizen: true,
+      response: true,
+    },
+  });
 };
 
 export const getAllComplaints = async () => {
   return prisma.complaint.findMany({
     orderBy: { createdAt: "desc" },
+    include: {
+      images: true,
+      citizen: true,
+    },
   });
 };
 
@@ -74,9 +98,10 @@ export const getComplaintsInMyRegion = async (leaderId: string) => {
   const leader = await prisma.user.findFirst({
     where: { id: leaderId },
   });
-    if (!leader) {
-        throw new Error("Leader not found");
-    }
+
+  if (!leader) {
+    throw new Error("Leader not found");
+  }
 
   if (leader.role !== "LEADER" || !leader.adminstrationScope) {
     throw new Error(
@@ -84,59 +109,60 @@ export const getComplaintsInMyRegion = async (leaderId: string) => {
     );
   }
 
-  let filter = {};
+  let filter: any = {};
 
   switch (leader.adminstrationScope) {
     case "PROVINCE":
-      filter = { user: { province: leader.province } };
+      filter = { citizen: { province: leader.province } };
       break;
     case "DISTRICT":
-      filter = { user: { district: leader.district } };
+      filter = { citizen: { district: leader.district } };
       break;
     case "SECTOR":
-      filter = { user: { sector: leader.sector } };
+      filter = { citizen: { sector: leader.sector } };
       break;
     case "CELL":
-      filter = { user: { cell: leader.cell } };
+      filter = { citizen: { cell: leader.cell } };
       break;
     case "VILLAGE":
-      filter = { user: { village: leader.village } };
+      filter = { citizen: { village: leader.village } };
       break;
   }
-const complaints = await prisma.complaint.findMany({
-  where: filter,
-  include: {
-    citizen: {
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        province: true,
-        district: true,
-        sector: true,
-        cell: true,
-        village: true,
-      },
-    },
-  },
-});
-return complaints
-};
-export const changeComplaintStatus = async (
-    complaintId: string,
-    status: ComplaintStatus,
-    ) => {
-    const complaint = await prisma.complaint.findUnique({
-        where: { id: complaintId },
-    });
-    
-    if (!complaint) throw new Error("Complaint not found");
 
-    return prisma.complaint.update({
-        where: { id: complaintId },
-        data: {
-        status,
+  return prisma.complaint.findMany({
+    where: filter,
+    include: {
+      citizen: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          province: true,
+          district: true,
+          sector: true,
+          cell: true,
+          village: true,
         },
-    });
-    }
+      },
+      images: true,
+    },
+  });
+};
+
+export const changeComplaintStatus = async (
+  complaintId: string,
+  status: ComplaintStatus
+) => {
+  const complaint = await prisma.complaint.findUnique({
+    where: { id: complaintId },
+  });
+
+  if (!complaint) throw new Error("Complaint not found");
+
+  return prisma.complaint.update({
+    where: { id: complaintId },
+    data: { status },
+    include: { images: true },
+  });
+};
