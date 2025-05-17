@@ -4,14 +4,14 @@ import { toUserDTO } from '../utils/user.dto';
 import { generateRefreshToken, generateToken } from '../utils/jwt';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
-  const { name, email, password } = req.body;
+  const { name, email, password,confirmPassword } = req.body;
   try {
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       res.status(400).json({ message: 'Name, email, and password are required' });
       return;
     }
 
-    const user = await registerUser(name, email, password);
+    const user = await registerUser(name, email, password,confirmPassword);
     const userDTO = toUserDTO(user);
     res.status(201).json({
       message: 'Registration successful. Please login to receive your token.',

@@ -6,17 +6,6 @@ export const createAgency = async (name: string, description?: string) => {
   return await prisma.agency.create({ data: { name, description } });
 };
 
-export const addCategoryToAgency = async (agencyId: string, name: string) => {
-  return await prisma.category.create({ data: { name, agencyId } });
-};
-
-export const getAllAgenciesWithCategories = async () => {
-  return await prisma.agency.findMany({
-    include: {
-      categories: true,
-    },
-  });
-};
 export const getAgencyById = async (id: string) => {
   return await prisma.agency.findUnique({
     where: { id },
@@ -36,25 +25,11 @@ export const deleteAgency = async (id: string) => {
     where: { id },
   });
 };
-export const deleteCategory = async (id: string) => {
-  return await prisma.category.delete({
-    where: { id },
+
+export const getAllAgencies= async() => {
+  return await prisma.agency.findMany({
+    include: {
+      categories: true,
+    },
   });
-};
-export const updateCategory = async (id: string, name: string) => {
-  return await prisma.category.update({
-    where: { id },
-    data: { name },
-  });
-};
-export const getCategoryById = async (id: string) => {
-  return await prisma.category.findUnique({
-    where: { id },
-  });
-};
-export const getAllCategories = async () => {
-  return await prisma.category.findMany();
-};
-export const getAllAgencies = async () => {
-  return await prisma.agency.findMany();
-};
+}

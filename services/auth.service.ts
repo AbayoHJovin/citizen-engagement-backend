@@ -4,12 +4,13 @@ import { generateToken } from '../utils/jwt';
 
 const prisma = new PrismaClient();
 
-export const registerUser = async (name: string, email: string, password: string) => {
+export const registerUser = async (name: string, email: string, password: string,confirmPassword:string) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new Error('Email already registered');
-
+  if(password != confirmPassword){
+    throw new Error("Passwords mismatch!")
+  }
   const hashed = await hashPassword(password);
-
   const user = await prisma.user.create({
     data: {
       name,

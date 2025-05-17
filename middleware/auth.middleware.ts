@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { Request, Response, NextFunction } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 declare global {
   namespace Express {
@@ -12,13 +12,17 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || '';
+const JWT_SECRET = process.env.JWT_SECRET || "";
 
-export const protect = (req: Request, res: Response, next: NextFunction): void => {
+export const protect = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   const token = req.cookies?.accessToken;
-
+  console.log("request:", req);
   if (!token) {
-    res.status(401).json({ message: 'Not authenticated' });
+    res.status(401).json({ message: "Not authenticated" });
     return;
   }
 
@@ -32,6 +36,6 @@ export const protect = (req: Request, res: Response, next: NextFunction): void =
 
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
+    res.status(401).json({ message: "Invalid token" });
   }
 };

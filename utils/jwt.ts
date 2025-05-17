@@ -14,13 +14,21 @@ export const verifyToken = (token: string) => {
 export const generateRefreshToken = async (userId: string) => {
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-  await prisma.refreshToken.create({
-    data: {
-      token,
-      userId,
-      expiresAt,
-    },
+
+  const existing = await prisma.refreshToken.findFirst({
+    where: { userId: userId },
   });
+
+  if (existing) {
+    await prisma.refreshToken.update({
+      where: { id: existing.id },
+      data: { token, expiresAt },
+    });
+  } else {
+    await prisma.refreshToken.create({
+      data: { token, userId, expiresAt },
+    });
+  }
 
   return token;
 };
