@@ -109,7 +109,6 @@ export const resetPasswordService = async (token: string, newPassword: string, c
 export const getUserFromAccessOrRefresh = async (req: Request): Promise<null | { name: string; email: string; role: string; newAccessToken?: string }> => {
   try {
     const accessToken = req.cookies.accessToken;
-    console.log("Access Token cookies: ", accessToken);
     if (!accessToken) {
       throw new Error("No access token");
     }

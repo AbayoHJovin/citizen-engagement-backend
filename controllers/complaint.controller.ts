@@ -4,7 +4,11 @@ import * as complaintService from "../services/complaint.service";
 export const create = async (req: Request, res: Response) => {
   const { title, description } = req.body;
   const userId = req.user!.id;
-
+  console.log("requestUserId", req.user);
+  if(!userId){
+    res.status(401).json({ message: "Re-login" });
+    return;
+  }
   try {
     const complaint = await complaintService.createComplaint(
       userId,

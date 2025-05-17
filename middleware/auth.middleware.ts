@@ -20,7 +20,6 @@ export const protect = (
   next: NextFunction
 ): void => {
   const token = req.cookies?.accessToken;
-  console.log("request cookies:", req.cookies);
   if (!token) {
     res.status(401).json({ message: "Not authenticated" });
     return;
@@ -30,7 +29,7 @@ export const protect = (
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
     req.user = {
-      id: decoded.id as string,
+      id: decoded.userId as string,
       role: decoded.role as string,
     };
 
