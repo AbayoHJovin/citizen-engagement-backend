@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import responseRoutes from "./routes/response.routes";
 import cors from "cors";
 import userRoutes from "./routes/user.routes";
+import leaderRoutes from "./routes/leader.routes";
 const cookieParser = require("cookie-parser");
 
 dotenv.config();
@@ -21,6 +22,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/responses", responseRoutes);
 app.use("/api/users", userRoutes);
-
+app.use("/api/leader",leaderRoutes)
 
 export default app;

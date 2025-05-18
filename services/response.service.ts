@@ -12,14 +12,26 @@ export const createResponse = async (responderId: string, complaintId: string, m
   });
 };
 
-export const updateResponse = async (responseId: string, message: string) => {
+export const updateResponse = async (responseId: string, message: string,responderId:string) => {
+  const response = await prisma.response.findUnique({
+    where: { id: responseId, responderId },
+  });
+  if (!response) {
+    throw new Error('Response not found or you do not have permission to update it');
+  }
   return prisma.response.update({
     where: { id: responseId },
     data: { message },
   });
 };
 
-export const deleteResponse = async (responseId: string) => {
+export const deleteResponse = async (responseId: string,responderId:string) => {
+  const response = await prisma.response.findUnique({
+    where: { id: responseId, responderId },
+  });
+  if (!response) {
+    throw new Error('Response not found or you do not have permission to delete it');
+  }
   return prisma.response.delete({
     where: { id: responseId },
   });

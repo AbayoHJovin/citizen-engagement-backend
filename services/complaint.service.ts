@@ -107,8 +107,29 @@ export const getComplaintById = async (complaintId: string) => {
     where: { id: complaintId },
     include: {
       images: true,
-      citizen: true,
-      response: true,
+      citizen: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          province: true,
+          district: true,
+          sector: true,
+          cell: true,
+          village: true,
+        },
+      },
+      responses: {
+        include: {
+          responder: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
     },
   });
 };

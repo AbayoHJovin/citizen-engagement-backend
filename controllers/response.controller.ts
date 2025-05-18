@@ -16,9 +16,9 @@ export const create = async (req: Request, res: Response) => {
 export const update = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { message } = req.body;
-
+  const responderId = req.user!.id;
   try {
-    const result = await responseService.updateResponse(id, message);
+    const result = await responseService.updateResponse(id, message,responderId);
     res.json(result);
   } catch (err: any) {
     res.status(400).json({ message: err.message });
@@ -27,9 +27,9 @@ export const update = async (req: Request, res: Response) => {
 
 export const remove = async (req: Request, res: Response) => {
   const { id } = req.params;
-
+  const responderId = req.user!.id;
   try {
-    const result = await responseService.deleteResponse(id);
+    const result = await responseService.deleteResponse(id,responderId);
     res.json(result);
   } catch (err: any) {
     res.status(400).json({ message: err.message });

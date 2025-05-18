@@ -43,7 +43,6 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 }
 
-
 model Complaint {
   id          String          @id @default(uuid())
   title       String
@@ -51,10 +50,20 @@ model Complaint {
   status      ComplaintStatus @default(PENDING)
   citizen     User            @relation(fields: [citizenId], references: [id])
   citizenId   String
-  response    Response?
-  images      Image[]      
+  responses   Response[]
+  images      Image[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+}
+
+model Response {
+  id          String    @id @default(uuid())
+  message     String
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  complaintId String
+  responder   User      @relation(fields: [responderId], references: [id])
+  responderId String
+  createdAt   DateTime  @default(now())
 }
 
 model Image {
@@ -62,17 +71,6 @@ model Image {
   url         String
   complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
   complaintId String
-  createdAt   DateTime  @default(now())
-}
-
-
-model Response {
-  id          String    @id @default(uuid())
-  message     String
-  complaint   Complaint @relation(fields: [complaintId], references: [id])
-  complaintId String    @unique
-  responder   User      @relation(fields: [responderId], references: [id])
-  responderId String
   createdAt   DateTime  @default(now())
 }
 

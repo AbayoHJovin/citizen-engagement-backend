@@ -140,7 +140,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
   }
-  res.json({ name: result.name, email: result.email, role: result.role });
+  res.json({ name: result.name, email: result.email, role: result.role,province: result.province, district: result.district, sector: result.sector, cell: result.cell, village: result.village, adminstrationScope: result.adminstrationScope,id: result.id });
 };
 
 export const logout = async (req: Request, res: Response) => {

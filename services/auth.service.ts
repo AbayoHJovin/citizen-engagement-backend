@@ -1,17 +1,27 @@
-import { PrismaClient } from '@prisma/client';
-import { hashPassword, comparePasswords } from '../utils/hash';
-import { generateToken, verifyToken } from '../utils/jwt';
-import crypto, { verify } from 'crypto';
-import { sendResetEmail } from '../utils/mailer';
-import { Request } from 'express';
+import { PrismaClient } from "@prisma/client";
+import { hashPassword, comparePasswords } from "../utils/hash";
+import { generateToken, verifyToken } from "../utils/jwt";
+import crypto, { verify } from "crypto";
+import { sendResetEmail } from "../utils/mailer";
+import { Request } from "express";
 
 const prisma = new PrismaClient();
 
-export const registerUser = async (name: string, email: string, password: string,confirmPassword:string,province:string,district:string,sector:string,cell:string,village:string) => {
+export const registerUser = async (
+  name: string,
+  email: string,
+  password: string,
+  confirmPassword: string,
+  province: string,
+  district: string,
+  sector: string,
+  cell: string,
+  village: string
+) => {
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) throw new Error('Email already registered');
-  if(password != confirmPassword){
-    throw new Error("Passwords mismatch!")
+  if (existing) throw new Error("Email already registered");
+  if (password != confirmPassword) {
+    throw new Error("Passwords mismatch!");
   }
   const hashed = await hashPassword(password);
   const user = await prisma.user.create({
@@ -19,13 +29,13 @@ export const registerUser = async (name: string, email: string, password: string
       name,
       email,
       password: hashed,
-      role: 'ADMIN',
+      role: "CITIZEN",
       province,
       district,
       sector,
       cell,
       village,
-    }
+    },
   });
 
   const token = generateToken(user.id, user.role);
@@ -34,10 +44,10 @@ export const registerUser = async (name: string, email: string, password: string
 
 export const loginUser = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) throw new Error('Invalid credentials');
+  if (!user) throw new Error("Invalid credentials");
 
   const match = await comparePasswords(password, user.password);
-  if (!match) throw new Error('Invalid credentials');
+  if (!match) throw new Error("Invalid credentials");
 
   const token = generateToken(user.id, user.role);
   return { user, token };
@@ -55,7 +65,9 @@ export const requestPasswordReset = async (email: string) => {
   });
 
   if (existing) {
-    throw new Error("A reset token has already been sent. Please check your email.");
+    throw new Error(
+      "A reset token has already been sent. Please check your email."
+    );
   }
 
   const token = crypto.randomBytes(32).toString("hex");
@@ -72,8 +84,11 @@ export const requestPasswordReset = async (email: string) => {
   await sendResetEmail(email, token);
 };
 
-
-export const resetPasswordService = async (token: string, newPassword: string, confirmNewPassword: string) => {
+export const resetPasswordService = async (
+  token: string,
+  newPassword: string,
+  confirmNewPassword: string
+) => {
   if (newPassword !== confirmNewPassword) {
     throw new Error("Passwords do not match");
   }
@@ -101,20 +116,45 @@ export const resetPasswordService = async (token: string, newPassword: string, c
   await prisma.passwordResetToken.delete({ where: { token } });
 };
 
-
-export const getUserFromAccessOrRefresh = async (req: Request): Promise<null | { name: string; email: string; role: string; newAccessToken?: string }> => {
+export const getUserFromAccessOrRefresh = async (
+  req: Request
+): Promise<null | {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  province?: string;
+  district?: string;
+  sector?: string;
+  cell?: string;
+  village?: string;
+  adminstrationScope?: string;
+  newAccessToken?: string;
+}> => {
   try {
     const accessToken = req.cookies.accessToken;
     if (!accessToken) {
       throw new Error("No access token");
     }
-      const decoded: any = verifyToken(accessToken);
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.userId },
-      });
-      if (user) return { name: user.name, email: user.email, role: user.role };
+    const decoded: any = verifyToken(accessToken);
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+    if (user)
+      return {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        province: user.province ?? undefined,
+        district: user.district ?? undefined,
+        sector: user.sector ?? undefined,
+        cell: user.cell ?? undefined,
+        village: user.village ?? undefined,
+        adminstrationScope: user.adminstrationScope ?? undefined,
+        id: user.id,
+      };
   } catch (err: any) {
-    if (err.name !== 'TokenExpiredError') {
+    if (err.name !== "TokenExpiredError") {
       return null;
     }
   }
@@ -129,12 +169,22 @@ export const getUserFromAccessOrRefresh = async (req: Request): Promise<null | {
 
   if (!storedToken || new Date() > storedToken.expiresAt) return null;
 
-  const newAccessToken = generateToken(storedToken.userId, storedToken.user.role);
+  const newAccessToken = generateToken(
+    storedToken.userId,
+    storedToken.user.role
+  );
 
   return {
+    id: storedToken.user.id,
     name: storedToken.user.name,
     email: storedToken.user.email,
     role: storedToken.user.role,
+    province: storedToken.user.province ?? undefined,
+    district: storedToken.user.district ?? undefined,
+    sector: storedToken.user.sector ?? undefined,
+    cell: storedToken.user.cell ?? undefined,
+    village: storedToken.user.village ?? undefined,
+    adminstrationScope: storedToken.user.adminstrationScope ?? undefined,
     newAccessToken,
   };
 };
@@ -142,8 +192,8 @@ export const getUserFromAccessOrRefresh = async (req: Request): Promise<null | {
 export const verifyRefreshToken = async (refreshToken: string) => {
   const token = await prisma.refreshToken.findUnique({
     where: { token: refreshToken },
-    include: { user:
-      {
+    include: {
+      user: {
         select: {
           id: true,
           name: true,
@@ -151,17 +201,17 @@ export const verifyRefreshToken = async (refreshToken: string) => {
           role: true,
         },
       },
-     },
+    },
   });
 
   if (!token) throw new Error("Invalid refresh token");
   if (token.expiresAt < new Date()) throw new Error("Refresh token expired");
 
   return token.user;
-}
+};
 
 export const logoutService = async (refreshToken: string) => {
   await prisma.refreshToken.delete({
     where: { token: refreshToken },
   });
-}
+};

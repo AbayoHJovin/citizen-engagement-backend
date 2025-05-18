@@ -1,6 +1,7 @@
 // utils/user.dto.ts
 
 export interface UserDTO {
+  id: string;
   name: string;
   email: string;
   role: string;
@@ -14,6 +15,7 @@ export interface UserDTO {
 
 export const toUserDTO = (user: any): UserDTO => {
   return {
+    id: user.user.id,
     name: user.user.name,
     email: user.user.email,
     role: user.user.role,
