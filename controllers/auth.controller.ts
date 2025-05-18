@@ -74,16 +74,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      // sameSite: "strict",
+      sameSite: "strict",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      // secure: process.env.NODE_ENV === "production",
-      // sameSite: "strict",
-      secure: true, // Must be true when sameSite is 'none'
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      // secure: true, // Must be true when sameSite is 'none'
+      // sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -133,10 +133,10 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   if (result.newAccessToken) {
     res.cookie("accessToken", result.newAccessToken, {
       httpOnly: true,
-      // secure: process.env.NODE_ENV === "production",
-      // sameSite: "strict",
-      secure: true, // Must be true when sameSite is 'none'
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      // secure: true,
+      // sameSite: "none",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
   }
