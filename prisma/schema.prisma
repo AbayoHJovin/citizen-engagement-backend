@@ -52,7 +52,7 @@ model Complaint {
   citizen     User            @relation(fields: [citizenId], references: [id])
   citizenId   String
   response    Response?
-  images      Image[]         // New relation
+  images      Image[]      
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 }

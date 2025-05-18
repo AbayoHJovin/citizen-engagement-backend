@@ -4,21 +4,29 @@ import * as complaintService from "../services/complaint.service";
 export const create = async (req: Request, res: Response) => {
   const { title, description } = req.body;
   const userId = req.user!.id;
-  if(!userId){
-    res.status(401).json({ message: "Re-login" });
+
+  if (!userId) {
+    res.status(401).json({ message: "Not logged in!" });
     return;
   }
+
   try {
+    const files = req.files as Express.Multer.File[];
+    const imageUrls = files?.map(file => file.path) || [];
+
     const complaint = await complaintService.createComplaint(
       userId,
       title,
-      description
+      description,
+      imageUrls
     );
+
     res.status(201).json(complaint);
   } catch (e: any) {
     res.status(400).json({ message: e.message });
   }
 };
+
 
 export const getMine = async (req: Request, res: Response) => {
   const userId = req.user!.id;

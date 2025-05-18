@@ -1,4 +1,6 @@
 import { PrismaClient, ComplaintStatus } from "@prisma/client";
+import { extractCloudinaryPublicId } from "../functions/extractCloudinaryPublicId ";
+import { v2 as cloudinary } from 'cloudinary';
 
 const prisma = new PrismaClient();
 
@@ -8,20 +10,31 @@ export const createComplaint = async (
   description: string,
   imageUrls: string[] = []
 ) => {
-  return prisma.complaint.create({
+  const complaint = await prisma.complaint.create({
     data: {
       title,
       description,
       citizenId,
-      images: {
-        create: imageUrls.map((url) => ({ url })),
-      },
     },
+  });
+
+  if (imageUrls.length > 0) {
+    await prisma.image.createMany({
+      data: imageUrls.map(url => ({
+        url,
+        complaintId: complaint.id,
+      })),
+    });
+  }
+
+  return prisma.complaint.findUnique({
+    where: { id: complaint.id },
     include: {
       images: true,
     },
   });
 };
+
 
 export const getMyComplaints = async (citizenId: string) => {
   return prisma.complaint.findMany({
@@ -54,13 +67,13 @@ export const updateComplaint = async (
     include: { images: true },
   });
 };
-
 export const deleteComplaint = async (
   complaintId: string,
   citizenId: string
 ) => {
   const complaint = await prisma.complaint.findUnique({
     where: { id: complaintId },
+    include: { images: true },
   });
 
   if (!complaint || complaint.citizenId !== citizenId)
@@ -69,7 +82,19 @@ export const deleteComplaint = async (
   if (complaint.status !== ComplaintStatus.PENDING)
     throw new Error("Only pending complaints can be deleted");
 
-  // Related images will be deleted automatically due to onDelete: Cascade
+  // 1. Delete images from Cloudinary
+  for (const image of complaint.images) {
+    const publicId = extractCloudinaryPublicId(image.url);
+    if (publicId) {
+      try {
+        await cloudinary.uploader.destroy(publicId);
+      } catch (e) {
+        console.error(`Failed to delete image ${publicId}:`, e);
+      }
+    }
+  }
+
+  // 2. Delete the complaint (images will be cascade-deleted from DB)
   return prisma.complaint.delete({ where: { id: complaintId } });
 };
 
