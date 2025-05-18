@@ -10,6 +10,10 @@ export const createComplaint = async (
   description: string,
   imageUrls: string[] = []
 ) => {
+  const citizen = await prisma.user.findUnique({
+    where: { id: citizenId },
+  });
+  if (!citizen) throw new Error("Citizen not found");
   const complaint = await prisma.complaint.create({
     data: {
       title,

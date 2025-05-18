@@ -19,7 +19,7 @@ export const registerUser = async (name: string, email: string, password: string
       name,
       email,
       password: hashed,
-      role: 'CITIZEN',
+      role: 'ADMIN',
       province,
       district,
       sector,
@@ -47,7 +47,6 @@ export const requestPasswordReset = async (email: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new Error("Email not found");
 
-  // Check for existing unexpired token
   const existing = await prisma.passwordResetToken.findFirst({
     where: {
       email,
@@ -60,7 +59,7 @@ export const requestPasswordReset = async (email: string) => {
   }
 
   const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
   await prisma.passwordResetToken.create({
     data: {
@@ -88,20 +87,17 @@ export const resetPasswordService = async (token: string, newPassword: string, c
   }
 
   if (tokenEntry.expiresAt < new Date()) {
-    // Cleanup expired token
     await prisma.passwordResetToken.delete({ where: { token } });
     throw new Error("Token has expired");
   }
 
   const hashedPassword = await hashPassword(newPassword);
 
-  // Update user password
   await prisma.user.update({
     where: { email: tokenEntry.email },
     data: { password: hashedPassword },
   });
 
-  // Remove used token
   await prisma.passwordResetToken.delete({ where: { token } });
 };
 
@@ -142,3 +138,30 @@ export const getUserFromAccessOrRefresh = async (req: Request): Promise<null | {
     newAccessToken,
   };
 };
+
+export const verifyRefreshToken = async (refreshToken: string) => {
+  const token = await prisma.refreshToken.findUnique({
+    where: { token: refreshToken },
+    include: { user:
+      {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+     },
+  });
+
+  if (!token) throw new Error("Invalid refresh token");
+  if (token.expiresAt < new Date()) throw new Error("Refresh token expired");
+
+  return token.user;
+}
+
+export const logoutService = async (refreshToken: string) => {
+  await prisma.refreshToken.delete({
+    where: { token: refreshToken },
+  });
+}

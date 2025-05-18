@@ -5,6 +5,7 @@ import {
   requestPasswordReset,
   resetPasswordService,
   getUserFromAccessOrRefresh,
+  logoutService,
 } from "../services/auth.service";
 import { toUserDTO } from "../utils/user.dto";
 import { generateRefreshToken, generateToken } from "../utils/jwt";
@@ -140,4 +141,11 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     });
   }
   res.json({ name: result.name, email: result.email, role: result.role });
+};
+
+export const logout = async (req: Request, res: Response) => {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+  logoutService(req.cookies.refreshToken);
+  res.status(200).json({ message: "Logged out successfully" });
 };

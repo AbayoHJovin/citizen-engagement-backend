@@ -14,7 +14,6 @@ export const createLeader = async (data: {
   cell?: string;
   village?: string;
 }) => {
-  // Check if email already exists
   const existingUser = await prisma.user.findUnique({
     where: { email: data.email },
   });
@@ -22,7 +21,6 @@ export const createLeader = async (data: {
     throw new Error("User with this email already exists");
   }
 
-  // Generate random password and hash it
   const randomPassword = uuidv4();
   const hashedPassword = await hashPassword(randomPassword);
 
@@ -83,4 +81,62 @@ export const updateLeader = async (id: string, data: any) => {
   });
 };
 
-    
+export const showCitizenLeaders = async (id: string) => {
+  const citizen = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      province: true,
+      district: true,
+      sector: true,
+      cell: true,
+      village: true,
+    },
+  });
+  if (!citizen) throw new Error("Citizen not found");
+  const villageLeader = await prisma.user.findFirst({
+    where: {
+      role: Role.LEADER,
+      adminstrationScope: AdminstrationScope.VILLAGE,
+      village: citizen.village,
+    },
+  });
+  const cellLeader = await prisma.user.findFirst({
+    where: {
+      role: Role.LEADER,
+      adminstrationScope: AdminstrationScope.CELL,
+      cell: citizen.cell,
+    },
+  });
+  const sectorLeader = await prisma.user.findFirst({
+    where: {
+      role: Role.LEADER,
+      adminstrationScope: AdminstrationScope.SECTOR,
+      sector: citizen.sector,
+    },
+  });
+  const districtLeader = await prisma.user.findFirst({
+    where: {
+      role: Role.LEADER,
+      adminstrationScope: AdminstrationScope.DISTRICT,
+      district: citizen.district,
+    },
+  });
+  const provinceLeader = await prisma.user.findFirst({
+    where: {
+      role: Role.LEADER,
+      adminstrationScope: AdminstrationScope.PROVINCE,
+      province: citizen.province,
+    },
+  });
+  return {
+    villageLeader,
+    cellLeader,
+    sectorLeader,
+    districtLeader,
+    provinceLeader,
+  };
+};

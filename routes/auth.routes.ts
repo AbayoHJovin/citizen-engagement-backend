@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, forgotPassword, resetPassword, getCurrentUser } from '../controllers/auth.controller';
+import { register, login, forgotPassword, resetPassword, getCurrentUser, logout } from '../controllers/auth.controller';
 import { registerValidationRules, validate } from '../middleware/validation';
 
 const router = Router();
@@ -9,5 +9,5 @@ router.post('/login', login);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.get('/me', getCurrentUser);
-
+router.post("/logout",logout)
 export default router;

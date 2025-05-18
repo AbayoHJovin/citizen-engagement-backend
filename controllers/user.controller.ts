@@ -72,3 +72,13 @@ export const updateLeader = async (req: Request, res: Response) => {
   }
 };
 
+
+export const showCitizenLeaders = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const leaders = await userService.showCitizenLeaders(id);
+    res.status(200).json(leaders);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
