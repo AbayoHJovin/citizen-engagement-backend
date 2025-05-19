@@ -4,6 +4,7 @@ import { generateToken, verifyToken } from "../utils/jwt";
 import crypto, { verify } from "crypto";
 import { sendResetEmail } from "../utils/mailer";
 import { Request } from "express";
+import { toUserDTO } from "../utils/user.dto";
 
 const prisma = new PrismaClient();
 
@@ -52,6 +53,17 @@ export const loginUser = async (email: string, password: string) => {
   const token = generateToken(user.id, user.role);
   return { user, token };
 };
+
+export const updateUser = async (id: string, data: any) => {
+  const toUpdate = await prisma.user.findUnique({ where: { id } });
+  if (!toUpdate) throw new Error("User not found");
+
+  const user = await prisma.user.update({
+    where: { id },
+    data,
+  });
+  return user;
+}
 
 export const requestPasswordReset = async (email: string) => {
   const user = await prisma.user.findUnique({ where: { email } });

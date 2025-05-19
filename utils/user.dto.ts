@@ -27,3 +27,18 @@ export const toUserDTO = (user: any): UserDTO => {
     adminstrationScope: user.user.adminstrationScope,
   };
 };
+
+export const newUserDto = (user: any): UserDTO => {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    province: user.province,
+    district: user.district,
+    sector: user.sector,
+    cell: user.cell,
+    village: user.village,
+    adminstrationScope: user.adminstrationScope,
+  };
+};

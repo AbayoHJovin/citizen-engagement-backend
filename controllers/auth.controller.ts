@@ -6,8 +6,9 @@ import {
   resetPasswordService,
   getUserFromAccessOrRefresh,
   logoutService,
+  updateUser,
 } from "../services/auth.service";
-import { toUserDTO } from "../utils/user.dto";
+import { newUserDto, toUserDTO } from "../utils/user.dto";
 import { generateRefreshToken, generateToken } from "../utils/jwt";
 interface Address {
   province: string;
@@ -87,10 +88,50 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Return only user info
     res.status(200).json({ user: userDTO });
   } catch (err: any) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+export const updateTheUser = async (req: Request, res: Response) => {
+  const { name, address } = req.body;
+  const { province, district, sector, cell, village } = address || {};
+  const userId = req.user?.id || "";
+
+  if (!userId) {
+    res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const hasAtLeastOneField =
+    name || province || district || sector || cell || village;
+  if (!hasAtLeastOneField) {
+    res
+      .status(400)
+      .json({ message: "At least one field must be provided to update." });
+  }
+
+  try {
+    const updateData: any = {};
+
+    if (name) updateData.name = name;
+
+    if (province || district || sector || cell || village) {
+      if (province) updateData.province = province;
+      if (district) updateData.district = district;
+      if (sector) updateData.sector = sector;
+      if (cell) updateData.cell = cell;
+      if (village) updateData.village = village;
+    }
+
+    const updatedUser = updateUser(userId, updateData);
+    if (!updatedUser) {
+      res.status(404).json({ message: "User not found" });
+    }
+    const convertedUser = newUserDto(updatedUser);
+    res.json(convertedUser);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -140,7 +181,18 @@ export const getCurrentUser = async (req: Request, res: Response) => {
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
   }
-  res.json({ name: result.name, email: result.email, role: result.role,province: result.province, district: result.district, sector: result.sector, cell: result.cell, village: result.village, adminstrationScope: result.adminstrationScope,id: result.id });
+  res.json({
+    name: result.name,
+    email: result.email,
+    role: result.role,
+    province: result.province,
+    district: result.district,
+    sector: result.sector,
+    cell: result.cell,
+    village: result.village,
+    adminstrationScope: result.adminstrationScope,
+    id: result.id,
+  });
 };
 
 export const logout = async (req: Request, res: Response) => {
