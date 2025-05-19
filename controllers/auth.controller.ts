@@ -72,20 +72,34 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const refreshToken = await generateRefreshToken(user.user.id);
 
     // Set cookies
+    // res.cookie("accessToken", accessToken, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "strict",
+    //   maxAge: 15 * 60 * 1000, // 15 minutes
+    // });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      secure: true,
+      sameSite: "none",
+      maxAge: 30 * 60 * 1000,
+      path: "/",
     });
 
+    // res.cookie("refreshToken", refreshToken, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "strict",
+    //   // secure: true, // Must be true when sameSite is 'none'
+    //   // sameSite: "none",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    // });
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      // secure: true, // Must be true when sameSite is 'none'
-      // sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: true,
+      sameSite: "none",
+      maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+      path: "/",
     });
 
     res.status(200).json({ user: userDTO });
@@ -172,13 +186,20 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 
   if (result.newAccessToken) {
+    // res.cookie("accessToken", result.newAccessToken, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "strict",
+    //   // secure: true,
+    //   // sameSite: "none",
+    //   maxAge: 15 * 60 * 1000, // 15 minutes
+    // });
     res.cookie("accessToken", result.newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      // secure: true,
-      // sameSite: "none",
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      secure: true,
+      sameSite: "none",
+      maxAge: 15 * 60 * 1000,
+      path: "/",
     });
   }
   res.json({
@@ -196,8 +217,30 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
-  logoutService(req.cookies.refreshToken);
+  const refreshToken = req.cookies.refreshToken;
+
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+  });
+
+  if (refreshToken) {
+    try {
+      await logoutService(refreshToken);
+    } catch (error) {
+      // Continue with logout even if token deletion fails
+      console.error("Error during logout:", error);
+    }
+  }
+
   res.status(200).json({ message: "Logged out successfully" });
 };

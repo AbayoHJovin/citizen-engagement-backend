@@ -1,8 +1,16 @@
-import { PrismaClient, ComplaintStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { extractCloudinaryPublicId } from "../functions/extractCloudinaryPublicId ";
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
 
 const prisma = new PrismaClient();
+
+// Define ComplaintStatus enum to match Prisma schema
+enum ComplaintStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  RESOLVED = "RESOLVED",
+  REJECTED = "REJECTED",
+}
 
 export const createComplaint = async (
   citizenId: string,
@@ -24,7 +32,7 @@ export const createComplaint = async (
 
   if (imageUrls.length > 0) {
     await prisma.image.createMany({
-      data: imageUrls.map(url => ({
+      data: imageUrls.map((url) => ({
         url,
         complaintId: complaint.id,
       })),
@@ -39,7 +47,6 @@ export const createComplaint = async (
   });
 };
 
-
 export const getMyComplaints = async (citizenId: string) => {
   return prisma.complaint.findMany({
     where: { citizenId },
@@ -53,10 +60,16 @@ export const getMyComplaints = async (citizenId: string) => {
 export const updateComplaint = async (
   complaintId: string,
   citizenId: string,
-  data: { title?: string; description?: string }
+  data: {
+    title?: string;
+    description?: string;
+    newImages?: string[];
+    imagesToRemove?: string[];
+  }
 ) => {
   const complaint = await prisma.complaint.findUnique({
     where: { id: complaintId },
+    include: { images: true },
   });
 
   if (!complaint || complaint.citizenId !== citizenId)
@@ -65,12 +78,67 @@ export const updateComplaint = async (
   if (complaint.status !== ComplaintStatus.PENDING)
     throw new Error("Only pending complaints can be updated");
 
-  return prisma.complaint.update({
+  // Handle image removals if specified
+  if (data.imagesToRemove && data.imagesToRemove.length > 0) {
+    // Find the images to delete
+    const imagesToDelete = await prisma.image.findMany({
+      where: {
+        id: { in: data.imagesToRemove },
+        complaintId: complaintId,
+      },
+    });
+
+    // Delete images from Cloudinary
+    for (const image of imagesToDelete) {
+      const publicId = extractCloudinaryPublicId(image.url);
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId);
+        } catch (e) {
+          console.error(`Failed to delete image ${publicId}:`, e);
+        }
+      }
+    }
+
+    // Delete images from database
+    await prisma.image.deleteMany({
+      where: {
+        id: { in: data.imagesToRemove },
+        complaintId: complaintId,
+      },
+    });
+  }
+
+  // Add new images if provided
+  if (data.newImages && data.newImages.length > 0) {
+    await prisma.image.createMany({
+      data: data.newImages.map((url) => ({
+        url,
+        complaintId,
+      })),
+    });
+  }
+
+  // Update complaint fields
+  const updateData: { title?: string; description?: string } = {};
+  if (data.title !== undefined) updateData.title = data.title;
+  if (data.description !== undefined) updateData.description = data.description;
+
+  // Only update if there are fields to update
+  if (Object.keys(updateData).length > 0) {
+    await prisma.complaint.update({
+      where: { id: complaintId },
+      data: updateData,
+    });
+  }
+
+  // Return the updated complaint with images
+  return prisma.complaint.findUnique({
     where: { id: complaintId },
-    data,
     include: { images: true },
   });
 };
+
 export const deleteComplaint = async (
   complaintId: string,
   citizenId: string
@@ -155,7 +223,7 @@ export const getComplaintsInMyRegion = async (leaderId: string) => {
 
   if (leader.role !== "LEADER" || !leader.adminstrationScope) {
     throw new Error(
-      "Only leaders with an administration scope can access complaints"
+      "Only leaders with an adminstrationScope scope can access complaints"
     );
   }
 

@@ -1,14 +1,23 @@
-import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
-const prisma = new PrismaClient
+const JWT_SECRET = process.env.JWT_SECRET || "dev_secret";
+const prisma = new PrismaClient();
 export const generateToken = (userId: string, role: string) => {
-  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '15m' });
+  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: "15m" });
 };
 
 export const verifyToken = (token: string) => {
-  return jwt.verify(token, JWT_SECRET);
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error: any) {
+    if (error.name === "TokenExpiredError") {
+      error.message = "Token has expired";
+    } else if (error.name === "JsonWebTokenError") {
+      error.message = "Invalid token";
+    }
+    throw error;
+  }
 };
 
 export const generateRefreshToken = async (userId: string) => {
