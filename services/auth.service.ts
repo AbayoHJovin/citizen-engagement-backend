@@ -211,6 +211,11 @@ export const verifyRefreshToken = async (refreshToken: string) => {
 };
 
 export const logoutService = async (refreshToken: string) => {
+  const token = await prisma.refreshToken.findUnique({
+    where: { token: refreshToken },
+  });
+  if (!token) throw new Error("Invalid refresh token");
+
   await prisma.refreshToken.delete({
     where: { token: refreshToken },
   });

@@ -9,7 +9,7 @@ export const sendResetEmail = async (to: string, token: string) => {
     },
   });
 
-  const resetLink = `http://localhost:8080/reset-password?token=${token}`;
+  const resetLink = `https://citizenvoice-gamma.vercel.app/reset-password?token=${token}`;
 
   const mailOptions = {
     from: `"Citizen Voice" <${process.env.EMAIL_USER}>`,
