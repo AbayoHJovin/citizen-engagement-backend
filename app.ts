@@ -12,8 +12,8 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    // origin:"http://localhost:8080",
-    origin:"https://citizenvoice-gamma.vercel.app",
+    origin:"http://localhost:8080",
+    // origin:"https://citizenvoice-gamma.vercel.app",
     credentials: true,
   })
 );
