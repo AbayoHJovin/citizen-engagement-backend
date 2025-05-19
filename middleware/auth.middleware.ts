@@ -86,6 +86,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      path:"/"
     });
 
     req.user = {
